@@ -145,6 +145,7 @@ let print_output res txt infos logtbl =
 
 let commit_list = ref ""
 let output_prefix = ref ""
+let load_dict_file = ref ""
 
 let options =
   ["-o", Arg.Set_string output_prefix,
@@ -155,6 +156,8 @@ let options =
     "  list of labelled commits (alternative argument)";
     "--git", Arg.Set_string Lcommon.linux,
     "  location of git tree";
+    "--load-dict", Arg.Set_string load_dict_file,
+    "  load dictionary";
     "--nolog", Arg.Clear words, "  exclude commit log message";
     "--balance", Arg.Set balance,
     "  same number of commits with true and false labls";
@@ -214,6 +217,7 @@ let _ =
 	(Parmap.L infos) [] (@) in
   Printf.eprintf "after parfold\n"; flush stderr;
   Lexer_c.init();
+  (if !load_dict_file <> "" then Lexer_c.load_dictionary !load_dict_file);
   List.iter (* cannot be parmapped!!! *)
     (function ((commit,_,_,_,_,_),(_,words)) ->
       List.iter
@@ -277,6 +281,9 @@ let _ =
   print_output tmp None (*(Some "newtxt.out")*) infos logtbl;
   let o = open_out (!output_prefix^".dict") in
   Lexer_c.print_dictionary o;
+  close_out o;
+  let o = open_out (!output_prefix^"_full.dict") in
+  Lexer_c.store_dictionary o;
   close_out o;
   Get_function_calls.gfc tmp (!output_prefix^".out")
 

@@ -209,6 +209,38 @@ let print_dictionary o =
 	| Info s -> Printf.fprintf o "%d: %s\n" n s)
     l
 
+let store_dictionary o =
+  let l = Hashtbl.fold (fun k v r -> (v,k) :: r) tbl [] in
+  let l = List.sort compare l in
+  List.iter
+    (function ((n,ct),k) ->
+      match k with
+        Type tok -> Printf.fprintf o "%d: %s: None\n" n (tok2c tok)
+        | Info s -> Printf.fprintf o "%d: %s" n s;
+      match !ct with
+        None -> Printf.fprintf o ": None\n"
+        | Some x ->
+          List.iter
+            (function (e) -> Printf.fprintf o ": %s" e) x;
+        Printf.fprintf o "\n";
+    )
+  l
+
+let load_dictionary dict_file =
+  let infos = (Lcommon.cmd_to_list ("cat "^dict_file)) in
+  List.iter
+    (function c ->
+      let lst = Array.of_list (Str.split (Str.regexp_string ": ") c) in
+      let sub = Array.sub lst 2 ((Array.length lst) - 2) in
+        Array.iter
+          (function commit ->
+           if commit <> "None"
+           then
+             add_index (Info (Array.get lst 1)) (Some commit))
+           sub
+    )
+  infos
+
 let getnum num extra =
   let extra = (* clunky... *)
     match extra with
